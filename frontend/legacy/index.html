@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>📚 8-sinf AI Homework</title>
+  <link rel="stylesheet" href="/static/css/style.css?v=2.0.1" />
+</head>
+<body>
+
+  <!-- ===================== AUTH (kirish / ro'yxatdan o'tish) ===================== -->
+  <div class="auth-cover hidden" id="authCover">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <span class="logo big">📚</span>
+        <h1>8-sinf AI Homework</h1>
+        <p>O'z darsliklaring asosida AI yordamchi</p>
+      </div>
+      <div class="auth-form" id="authForm">
+        <div class="auth-tabs">
+          <button class="auth-tab active" data-mode="login">👤 Kirish</button>
+          <button class="auth-tab" data-mode="register">📝 Ro'yxatdan o'tish</button>
+        </div>
+
+        <form id="authLogin" onsubmit="return false;">
+          <label>Username
+            <input type="text" id="inLoginUser" autocomplete="username" placeholder="username" />
+          </label>
+          <label>Parol
+            <input type="password" id="inLoginPass" autocomplete="current-password" placeholder="••••••••" />
+          </label>
+          <button class="btn primary big block" type="submit" id="btnLogin">Kirish</button>
+          <p class="auth-switch hint">Hisobingiz yo'qmi? <a href="#" data-goto="register">Ro'yxatdan o'tish</a></p>
+        </form>
+
+        <form id="authRegister" class="hidden" onsubmit="return false;">
+          <div class="frow">
+            <label>Ism
+              <input type="text" id="inRegFirst" placeholder="Ism" />
+            </label>
+            <label>Familiya
+              <input type="text" id="inRegLast" placeholder="Familiya" />
+            </label>
+          </div>
+          <label>Username
+            <input type="text" id="inRegUser" placeholder="masalan: aziz2009" minlength="3" required />
+          </label>
+          <label>Parol
+            <input type="password" id="inRegPass" placeholder="kamida 4 ta belgi" minlength="4" required />
+          </label>
+          <button class="btn primary big block" type="submit" id="btnRegister">Ro'yxatdan o'tish</button>
+          <p class="hint">Shaxsiy aloqa ma'lumotlari so'ralmaydi.</p>
+        </form>
+        <div class="auth-msg" id="authMsg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== APP ===================== -->
+  <div id="app" class="hidden">
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo">📚</span>
+        <h1>8-sinf AI Homework</h1>
+      </div>
+      <nav class="tabs">
+        <button class="tab active" data-tab="books">📚 Kitoblar</button>
+        <button class="tab" data-tab="ai">🤖 AI Uy vazifasi</button>
+        <button class="tab" data-tab="history">🕘 Tarix</button>
+      </nav>
+      <div class="user-menu">
+        <a href="/admin" class="admin-link hidden" id="adminLink">🛠 Admin</a>
+        <span class="ai-badge" id="aiBadge" title="AI holati">…</span>
+        <span class="username" id="userName">—</span>
+        <button class="btn tiny ghost" id="btnLogout" title="Chiqish">⏻</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- ======================= KITOBLAR ======================= -->
+      <section id="tab-books" class="tabpane active">
+        <div class="books-layout">
+          <aside class="sidebar">
+            <div class="sidebar-head">
+              <span>🔖 Fanlar</span>
+              <button id="btnAddBook" class="btn small primary" title="8-sinf PDF qo'shish (admin)">➕ Kitob</button>
+            </div>
+            <div id="subjectList" class="subject-list"><div class="loading">Fanlar yuklanmoqda…</div></div>
+            <div class="sidebar-foot">
+              <div class="index-box">
+                <div id="indexInfo">Indeks: yuklanmoqda…</div>
+                <button id="btnReindex" class="btn tiny ghost">Qayta indekslash</button>
+              </div>
+            </div>
+          </aside>
+
+          <section class="books-main">
+            <div class="books-head">
+              <h2 id="subjectTitle">8-sinf kitoblar</h2>
+              <span class="hint" id="kitobHint">Kitobni tanlang va oching</span>
+            </div>
+            <div id="bookList" class="book-grid"><div class="empty">Yuklanmoqda…</div></div>
+          </section>
+        </div>
+
+        <!-- PDF VIEWER -->
+        <div id="viewer" class="viewer hidden">
+          <div class="viewer-toolbar">
+            <button class="btn ghost small" id="btnCloseViewer">← Kitoblar</button>
+            <div class="v-title">
+              <strong id="viewerTitle">Kitob</strong>
+              <span class="v-meta" id="viewerEdition"></span>
+            </div>
+            <div class="v-controls">
+              <button class="btn small" id="btnPrev" title="Oldingi">◀</button>
+              <input id="pageInput" type="number" min="1" value="1" title="Sahifa" />
+              <span>/</span><span id="pageTotal">0</span>
+              <button class="btn small" id="btnNext" title="Keyingi">▶</button>
+              <span class="printed-badge" id="printedBadge">bet —</span>
+              <input id="offsetInput" type="number" value="0" title="Sahifa farqi" />
+              <span class="tiny-label">ofset</span>
+              <button class="btn small" id="btnZout" title="Kichraytirish">−</button>
+              <button class="btn small" id="btnZin" title="Kattalashtirish">+</button>
+              <button class="btn small ghost" id="btnFit" title="Sig'dirish">⤢</button>
+              <button class="btn small ghost" id="btnText" title="Matn paneli">📄</button>
+            </div>
+            <div class="v-search">
+              <input id="viewerSearch" type="search" placeholder="Matnni qidirish…" />
+              <button class="btn small" id="btnSearchBook">🔍</button>
+              <div id="searchResults" class="search-results hidden"></div>
+            </div>
+          </div>
+          <div class="viewer-body">
+            <div class="page-wrap" id="pageWrap">
+              <img id="pageImg" alt="sahifa" class="page-img" draggable="false" />
+              <div class="page-loading" id="pageLoading" hidden>Yuklanmoqda…</div>
+            </div>
+            <div class="text-panel hidden" id="textPanel">
+              <div class="tp-head">
+                <span>📄 Sahifa matni</span>
+                <button class="btn tiny ghost" id="btnCopyText">Nusxalash</button>
+              </div>
+              <pre id="pageTextPre"></pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================= AI ======================= -->
+      <section id="tab-ai" class="tabpane">
+        <div class="ai-layout">
+          <div class="ai-card">
+            <h2>🤖 AI Uy vazifasi</h2>
+            <p class="ai-sub">
+              Kitob, bet va mashq raqamini yozing. Masalan: <b>«Algebra 8-sinf 100-bet №2»</b>
+            </p>
+            <div class="chips" id="exampleChips">
+              <button class="chip" data-q="Algebra 8-sinf 100-bet №2">Algebra 8-sinf 100-bet №2</button>
+              <button class="chip" data-q="Geometriya 8-sinf 54-bet №7">Geometriya 8-sinf 54-bet №7</button>
+              <button class="chip" data-q="Fizika 8-sinf 32-bet 4-masala">Fizika 8-sinf 32-bet 4-masala</button>
+              <button class="chip" data-q="Kimyo 8-sinf 50-bet 3-misol">Kimyo 8-sinf 50-bet 3-misol</button>
+              <button class="chip" data-q="Kvadrat tenglamani qanday yechish kerak?">Kvadrat tenglama nima?</button>
+            </div>
+            <textarea id="aiQuestion" rows="4" placeholder="Savolingizni yozing…&#10;Misol: «Ona tili 8-sinf 45-bet 7-topshiriq»"></textarea>
+            <div class="ai-actions">
+              <button class="btn primary big" id="btnSolve">⚡ Yechish</button>
+              <button class="btn ghost big" id="btnClearAnswer">Tozalash</button>
+            </div>
+            <div class="ai-status" id="aiStatus"></div>
+          </div>
+
+          <div class="answer-area" id="answerArea">
+            <div class="answer-empty">
+              <div class="ae-icon">🧠</div>
+              <p>AI yechim kutilmoqda…</p>
+              <p class="hint">Manba har doim kitob va sahifa bilan ko'rsatiladi.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================= TARIX ======================= -->
+      <section id="tab-history" class="tabpane">
+        <div class="history-layout">
+          <div class="history-list">
+            <h2>🕘 Savollarim</h2>
+            <div id="historyList" class="hist-items"><div class="loading">Yuklanmoqda…</div></div>
+          </div>
+
+          <div class="history-list">
+            <h2>⭐ Saqlangan yechimlar</h2>
+            <div id="savedList" class="hist-items"><div class="loading">Yuklanmoqda…</div></div>
+          </div>
+        </div>
+        <div class="saved-detail" id="savedDetail"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ==================== ADD BOOK MODAL ==================== -->
+  <div class="modal hidden" id="addBookModal">
+    <div class="modal-backdrop" data-close="addBookModal"></div>
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>➕ 8-sinf kitob qo'shish (admin)</h3>
+        <button class="btn ghost small" data-close="addBookModal">✖</button>
+      </div>
+      <form id="addBookForm">
+        <label class="drop" id="dropZone">
+          <input type="file" id="pdfFile" accept=".pdf" required />
+          <span id="dropText">📄 PDF faylni tanlang yoki shu yerga tashlang</span>
+        </label>
+        <div class="frow">
+          <label>Fan
+            <select id="fbSubject" required></select>
+          </label>
+          <label>Yil
+            <input type="text" id="fbYear" placeholder="2022" />
+          </label>
+        </div>
+        <label>Kitob nomi
+          <input type="text" id="fbTitle" placeholder="«Ona tili – 8-sinf»" />
+        </label>
+        <label>Muallif(lar)
+          <input type="text" id="fbAuthor" placeholder="A. Bahromov, …" />
+        </label>
+        <div class="frow">
+          <label>Nashriyot
+            <input type="text" id="fbPublisher" placeholder="Respublika ta'lim markazi" />
+          </label>
+          <label>Nashr
+            <input type="text" id="fbEdition" placeholder="2022-yil qayta ishlangan nashri" />
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn ghost" data-close="addBookModal">Bekor</button>
+          <button type="submit" class="btn primary">Qo'shish</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/static/js/api.js?v=2.0.1"></script>
+  <script src="/static/js/bookviewer.js?v=2.0.1"></script>
+  <script src="/static/js/app.js?v=2.0.1"></script>
+</body>
+</html>

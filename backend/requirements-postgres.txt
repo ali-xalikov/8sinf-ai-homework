@@ -1,0 +1,4 @@
+# PostgreSQL qo'llab-quvvatlash uchun (shart emas, SQLite avtomatik):
+#   pip install -r requirements-postgres.txt
+#   DATABASE_URL=postgresql+psycopg://user:pass@host:5432/dbname
+psycopg[binary]>=3.1

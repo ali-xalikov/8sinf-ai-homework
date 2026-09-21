@@ -1,0 +1,38 @@
+# ---------- Sirli sozlamalar ----------
+.env
+.env.local
+.env.production
+frontend/.env
+frontend/.env.local
+
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.venv*/
+venv/
+env/
+
+# ---------- Node / frontend ----------
+node_modules/
+frontend/dist/
+dist/
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# ---------- Ma'lumotlar (lokal) ----------
+index/
+backend/index/
+books/**/*.pdf
+backend/books/**/*.pdf
+*.db
+*.sqlite
+*.sqlite3
+
+# ---------- OS / muhit ----------
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

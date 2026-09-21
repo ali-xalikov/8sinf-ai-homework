@@ -1,0 +1,31 @@
+{
+  "subjects": [
+    {
+      "id": "algebra",
+      "name": "Algebra",
+      "class": 8,
+      "books": [
+        {
+          "id": "algebra-algebra-8-sinf-namuna",
+          "title": "Algebra 8-sinf (NAMUNA)",
+          "author": "Sinov",
+          "edition": "",
+          "publisher": "",
+          "year": "",
+          "language": "uz",
+          "pdf_path": "books/algebra/Algebra_8-sinf_NAMUNA.pdf"
+        },
+        {
+          "id": "algebra-algebra-8-sinf",
+          "title": "Algebra 8-sinf",
+          "author": "Vazirlik nashri",
+          "edition": "",
+          "publisher": "",
+          "year": "2026",
+          "language": "uz",
+          "pdf_path": "books/algebra/Algebra_8_sinf.pdf"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+services:
+  - type: web
+    name: 8sinf-ai-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: LLM_PROVIDER
+        value: openai
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
+      - key: OCR_ENABLED
+        value: "false"
+      - key: SESSION_DAYS
+        value: "30"
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: PUBLIC_BASE_URL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: 8sinf-ai-db
+          property: connectionString
+    disk:
+      name: books
+      mountPath: /app/books
+      sizeGB: 1
+
+databases:
+  - name: 8sinf-ai-db
+    databaseName: sinf8
+    user: sinf8

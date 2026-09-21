@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🛠 Admin Paneli — 8-sinf AI Homework</title>
+  <link rel="stylesheet" href="/static/css/style.css?v=2.0.1" />
+</head>
+<body class="admin-body">
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">🛠</span>
+      <h1>Admin Paneli</h1>
+    </div>
+    <nav class="admin-nav">
+      <button class="tab active" data-panel="overview">📊 Umumiy</button>
+      <button class="tab" data-panel="books">📚 Kitoblar</button>
+      <button class="tab" data-panel="users">👥 Foydalanuvchilar</button>
+      <button class="tab" data-panel="ai">🤖 AI Sozlamalari</button>
+      <button class="tab" data-panel="index">🗂 Indeks</button>
+    </nav>
+    <a href="/" class="btn ghost small">← Ilovaga</a>
+  </header>
+
+  <main class="admin-main">
+    <!-- OVERVIEW -->
+    <section id="panel-overview" class="apane active">
+      <div class="stat-grid" id="statGrid">
+        <div class="stat-card"><b>?</b><span>Foydalanuvchilar</span></div>
+        <div class="stat-card"><b>?</b><span>Faol foydalanuvchilar</span></div>
+        <div class="stat-card"><b>?</b><span>Kitoblar</span></div>
+        <div class="stat-card"><b>?</b><span>Indekslangan kitoblar</span></div>
+        <div class="stat-card"><b>?</b><span>Indekslangan sahifalar</span></div>
+        <div class="stat-card"><b>?</b><span>Chunklar</span></div>
+        <div class="stat-card"><b>?</b><span>Chat savollari</span></div>
+        <div class="stat-card"><b>?</b><span>AI provayder</span></div>
+      </div>
+      <div class="status-row" id="serverStatus"></div>
+    </section>
+
+    <!-- BOOKS -->
+    <section id="panel-books" class="apane">
+      <div class="panel-head">
+        <h3>📚 Kitoblar</h3>
+        <button class="btn primary small" id="adBtnAdd">➕ Qo'shish</button>
+      </div>
+      <table class="admin-table">
+        <thead><tr><th>Fan</th><th>Kitob</th><th>Nashr / yil</th><th>Sahifalar</th><th>Indeks</th><th>Amallar</th></tr></thead>
+        <tbody id="adminBookRows"></tbody>
+      </table>
+    </section>
+
+    <!-- USERS -->
+    <section id="panel-users" class="apane">
+      <div class="panel-head"><h3>👥 Foydalanuvchilar</h3></div>
+      <table class="admin-table">
+        <thead><tr><th>Username</th><th>Ism / Familiya</th><th>Roli</th><th>Holat</th><th>Ro'yxatdan o'tgan</th><th>Amal</th></tr></thead>
+        <tbody id="adminUserRows"></tbody>
+      </table>
+    </section>
+
+    <!-- AI -->
+    <section id="panel-ai" class="apane">
+      <h3>🤖 AI Sozlamalari</h3>
+      <div class="ai-settings" id="aiSettingsBox"></div>
+      <div class="admin-note">
+        <p>💡 AI sozlamalari <b>faqat server tomonida</b> joylashgan .env faylida o'zgartiriladi
+          (admin brauzeridan API kalitlar ko'rinmaydi).</p>
+        <ul>
+          <li><code>LLM_PROVIDER=auto|ollama|openai|none</code></li>
+          <li><code>OPENAI_API_KEY=...</code> (ixtiyoriy, OpenAI-compatible)</li>
+          <li><code>OLLAMA_BASE_URL / OLLAMA_MODEL</code> — mahalliy model (ta'rifga qarang)</li>
+          <li><code>MAX_CONCURRENT_AI_REQUESTS</code> va <code>MAX_AI_REQUESTS_PER_MINUTE</code> — navbat chegarasi</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- INDEX -->
+    <section id="panel-index" class="apane">
+      <div class="panel-head">
+        <h3>🗂 Indeks</h3>
+        <button class="btn primary small" id="adBtnReindex">🔄 Qayta indekslash</button>
+      </div>
+      <div id="indexInfoBox" class="info-box"></div>
+      <table class="admin-table">
+        <thead><tr><th>Kitob</th><th>Sahifa</th><th>Indekslangan</th><th>Ofset</th><th>Amal</th></tr></thead>
+        <tbody id="indexRows"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+  <script src="/static/js/api.js?v=2.0.1"></script>
+  <script src="/static/js/admin.js?v=2.0.1"></script>
+</body>
+</html>
