@@ -146,7 +146,7 @@ def list_books(subject_id: Optional[str] = None) -> List[Dict[str, Any]]:
         rows = storage.exec_all("SELECT * FROM books WHERE class_no=8 ORDER BY subject_id, title")
     out = []
     for r in rows:
-        p = Path(r["pdf_path"])
+        p = config.resolve_path(r["pdf_path"])
         out.append({
             "id": r["id"], "subject_id": r["subject_id"], "subject_name": display_subject(r["subject_id"]),
             "title": r["title"] or p.stem, "author": r["author"], "edition": r["edition"],

@@ -21,28 +21,13 @@ def subjects(req: Request):
 
 @router.get("/books/{bid}/pages/{page}/render")
 def render_page(bid: str, page: int, scale: float = 1.5):
-    print("=" * 50)
-    print("RENDER so‘rovi keldi")
-    print("bid:", bid)
-    
     b = db.get_book(bid)
-    print("db.get_book natijasi:", b)
-    
-    if b:
-        print("exists:", b.get("exists"))
-        print("pdf_path:", b.get("pdf_path"))
-        print("title:", b.get("title"))
-    else:
-        print("Kitob bazadan topilmadi!")
-    
     if not b or not b.get("exists"):
         raise HTTPException(404, f"Kitob topilmadi. bid={bid}")
 
     try:
         doc = fitz.open(b["pdf_path"])
         total = len(doc)
-        print("PDF sahifalar soni:", total)
-
         if page < 1 or page > total:
             doc.close()
             raise HTTPException(404, f"Sahifa topilmadi (1-{total})")
@@ -52,14 +37,24 @@ def render_page(bid: str, page: int, scale: float = 1.5):
         pix = p.get_pixmap(matrix=mat, alpha=False)
         img_bytes = pix.tobytes("png")
         doc.close()
-
-        print("Render muvaffaqiyatli")
         return Response(content=img_bytes, media_type="image/png")
     except HTTPException:
         raise
     except Exception as e:
-        print("XATO:", str(e))
         raise HTTPException(500, f"Render xatosi: {str(e)}")
+
+
+@router.get("/books/{bid}/file")
+def book_file(bid: str):
+    """Xom PDF faylni qaytaradi — brauzerda <embed>/<iframe> orqali ochish uchun.
+
+    Render endpoint singari auth talab qilmaydi (img/embed src uchun).
+    """
+    b = db.get_book(bid)
+    if not b or not b.get("exists"):
+        raise HTTPException(404, f"PDF fayl topilmadi: {b['pdf_path'] if b else bid}")
+    from fastapi.responses import FileResponse
+    return FileResponse(b["pdf_path"], media_type="application/pdf")
 
 
 @router.get("/books")

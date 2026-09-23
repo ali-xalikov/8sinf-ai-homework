@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 
-import { api } from "../api";
+import { api, baseUrl } from "../api";
 import { navigate } from "../router";
 import { useToast } from "../components/Toast";
+import { Icon } from "../components/Icons";
 
 import type { Book, SearchHit } from "../types";
 
@@ -12,7 +13,7 @@ interface Props {
 }
 
 const renderUrl = (bid: string, page: number, scale: number) =>
-  `/api/books/${encodeURIComponent(bid)}/pages/${page}/render?scale=${scale}&_=${Date.now()}`;
+  `${baseUrl}/api/books/${encodeURIComponent(bid)}/pages/${page}/render?scale=${scale}&_=${Date.now()}`;
 
 export function PdfViewer({ bid, pageParam }: Props) {
   const toast = useToast();
@@ -21,6 +22,7 @@ export function PdfViewer({ bid, pageParam }: Props) {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [scale, setScale] = useState(1.5);
+  const [mode, setMode] = useState<"pdf" | "page">("pdf");
 
   const [imgSrc, setImgSrc] = useState("");
   const [loading, setLoading] = useState(true);
@@ -122,7 +124,7 @@ export function PdfViewer({ bid, pageParam }: Props) {
    * 2. PDF sahifasini rasm sifatida yuklash
    */
   useEffect(() => {
-    if (!book || total <= 0) return;
+    if (!book || total <= 0 || mode !== "page") return;
 
     const currentRequest = ++requestId.current;
 
@@ -164,7 +166,7 @@ export function PdfViewer({ bid, pageParam }: Props) {
       img.onload = null;
       img.onerror = null;
     };
-  }, [bid, book, total, page, scale]);
+  }, [bid, book, total, page, scale, mode]);
 
   /*
    * 3. Sahifa matnini yuklash
@@ -317,8 +319,9 @@ export function PdfViewer({ bid, pageParam }: Props) {
               className="v-btn"
               onClick={() => goto(page - 1)}
               disabled={page <= 1 || loading}
+              title="Oldingi sahifa"
             >
-              ◀
+              <Icon.ChevronLeft />
             </button>
 
             <input
@@ -346,8 +349,9 @@ export function PdfViewer({ bid, pageParam }: Props) {
                 total <= 0 ||
                 loading
               }
+              title="Keyingi sahifa"
             >
-              ▶
+              <Icon.ChevronRight />
             </button>
 
             <span className="printed-badge">
@@ -408,9 +412,25 @@ export function PdfViewer({ bid, pageParam }: Props) {
               onClick={() =>
                 setShowText((value) => !value)
               }
-              title="Matn paneli"
+              title="Sahifa matni"
             >
-              📄
+              <Icon.FileText />
+            </button>
+
+            <button
+              className={
+                mode === "pdf"
+                  ? "v-btn printed-badge"
+                  : "v-btn"
+              }
+              onClick={() =>
+                setMode((value) =>
+                  value === "pdf" ? "page" : "pdf"
+                )
+              }
+              title="PDF / rasm ko'rinishi"
+            >
+              <Icon.BookOpen />
             </button>
           </div>
 
@@ -437,8 +457,9 @@ export function PdfViewer({ bid, pageParam }: Props) {
             <button
               className="v-btn"
               onClick={doSearch}
+              title="Qidirish"
             >
-              🔍
+              <Icon.Search />
             </button>
           </div>
         </div>
@@ -462,8 +483,9 @@ export function PdfViewer({ bid, pageParam }: Props) {
               <button
                 className="v-btn"
                 onClick={() => setResults(null)}
+                title="Yopish"
               >
-                ✕
+                <Icon.X />
               </button>
             </div>
 
@@ -523,93 +545,109 @@ export function PdfViewer({ bid, pageParam }: Props) {
             </div>
           )}
 
-          {!loading && error && (
-            <div
-              className="empty"
-              style={{
-                padding: 40,
-                textAlign: "center",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 40,
-                  marginBottom: 12,
-                }}
-              >
-                ⚠️
-              </div>
-
-              <strong>
-                PDF sahifasini ochib bo‘lmadi
-              </strong>
-
-              <div
-                className="hint"
-                style={{
-                  marginTop: 8,
-                }}
-              >
-                {error}
-              </div>
-
-              <button
-                className="btn"
-                style={{ marginTop: 16 }}
-                onClick={() => {
-                  setError("");
-                  setLoading(true);
-
-                  const current =
-                    ++requestId.current;
-
-                  const src = renderUrl(
-                    bid,
-                    page,
-                    scale
-                  );
-
-                  const img = new Image();
-
-                  img.onload = () => {
-                    if (
-                      current !== requestId.current
-                    ) {
-                      return;
-                    }
-
-                    setImgSrc(src);
-                    setLoading(false);
-                  };
-
-                  img.onerror = () => {
-                    if (
-                      current !== requestId.current
-                    ) {
-                      return;
-                    }
-
-                    setLoading(false);
-                    setError(
-                      "PDF sahifasi yana yuklanmadi."
-                    );
-                  };
-
-                  img.src = src;
-                }}
-              >
-                Qayta urinish
-              </button>
-            </div>
-          )}
-
-          {!loading && !error && imgSrc && (
-            <img
-              className="page-img"
-              src={imgSrc}
-              alt={`${page}-sahifa`}
-              draggable={false}
+          {mode === "pdf" ? (
+            <embed
+              key={book.id}
+              src={api.bookFileUrl(bid)}
+              type="application/pdf"
+              width="100%"
+              height="100%"
+              style={{ minHeight: "78vh", width: "100%", border: 0 }}
             />
+          ) : (
+            <>
+              {!loading && error && (
+                <div
+                  className="empty"
+                  style={{
+                    padding: 40,
+                    textAlign: "center",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 40,
+                      marginBottom: 12,
+                      display: "flex",
+                      justifyContent: "center",
+                      color: "#dc2626",
+                    }}
+                  >
+                    <Icon.AlertTriangle size={40} />
+                  </div>
+
+                  <strong>
+                    PDF sahifasini ochib bo‘lmadi
+                  </strong>
+
+                  <div
+                    className="hint"
+                    style={{
+                      marginTop: 8,
+                    }}
+                  >
+                    {error}
+                  </div>
+
+                  <button
+                    className="btn"
+                    style={{ marginTop: 16 }}
+                    onClick={() => {
+                      setError("");
+                      setLoading(true);
+
+                      const current =
+                        ++requestId.current;
+
+                      const src = renderUrl(
+                        bid,
+                        page,
+                        scale
+                      );
+
+                      const img = new Image();
+
+                      img.onload = () => {
+                        if (
+                          current !== requestId.current
+                        ) {
+                          return;
+                        }
+
+                        setImgSrc(src);
+                        setLoading(false);
+                      };
+
+                      img.onerror = () => {
+                        if (
+                          current !== requestId.current
+                        ) {
+                          return;
+                        }
+
+                        setLoading(false);
+                        setError(
+                          "PDF sahifasi yana yuklanmadi."
+                        );
+                      };
+
+                      img.src = src;
+                    }}
+                  >
+                    Qayta urinish
+                  </button>
+                </div>
+              )}
+
+              {!loading && !error && imgSrc && (
+                <img
+                  className="page-img"
+                  src={imgSrc}
+                  alt={`${page}-sahifa`}
+                  draggable={false}
+                />
+              )}
+            </>
           )}
         </div>
 
@@ -624,9 +662,9 @@ export function PdfViewer({ bid, pageParam }: Props) {
           >
             <div
               className="sec-label"
-              style={{ marginBottom: 8 }}
+              style={{ marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}
             >
-              📄 Sahifa matni
+              <Icon.FileText /> Sahifa matni
             </div>
 
             <pre

@@ -17,6 +17,56 @@ SECTIONS = [
     "Izoh", "Tushuntirish", "Batafsil tushuntirish", "Xulosa", "Xulosa / Javob",
 ]
 
+# ---------------------------------------------------------------------------
+# Markdown belgilarini olib tashlab, toza matn qaytarish
+# ---------------------------------------------------------------------------
+_MD_BOLD = re.compile(r"(\*\*|__)(.+?)\1", re.S)
+_MD_ITALIC = re.compile(r"(?<!\*)\*(?!\s)(.+?)(?<!\s)\*(?!\*)", re.S)
+_MD_CODE = re.compile(r"`([^`]*)`")
+_MD_HEAD = re.compile(r"^\s*#{1,6}\s*", re.M)
+_MD_LINK = re.compile(r"\[([^\]]+)\]\([^)]+\)")
+_TABLE_SEP = re.compile(r"^\s*\|?[\s:|-]+\|[\s:|-]*$")
+_EMOJI = re.compile(
+    "["
+    "\U0001F000-\U0001FAFF"
+    "\U00002600-\U000027BF"
+    "\U00002190-\U000021FF"
+    "\U00002B00-\U00002BFF"
+    "\U0000FE00-\U0000FE0F"
+    "\U0001F1E6-\U0001F1FF"
+    "]+",
+    flags=re.UNICODE,
+)
+
+
+def clean_plain_text(text: str) -> str:
+    """Javobni toza, o'qiladigan matnga aylantiradi.
+
+    ##, **, __, `, markdown havolalar, jadvallar (|) va emojilarni olib tashlaydi.
+    """
+    out_lines: List[str] = []
+    for line in (text or "").splitlines():
+        s = line.rstrip()
+        if _TABLE_SEP.match(s):
+            continue
+        if s.lstrip().startswith("|"):
+            cells = [c.strip() for c in s.strip().strip("|").split("|")]
+            cells = [c for c in cells if c]
+            if cells:
+                s = " — ".join(cells)
+        s = _MD_LINK.sub(r"\1", s)
+        s = _MD_BOLD.sub(r"\2", s)
+        s = _MD_CODE.sub(r"\1", s)
+        s = _MD_ITALIC.sub(r"\1", s)
+        s = _MD_HEAD.sub("", s)
+        s = s.replace("`", "")
+        s = _EMOJI.sub("", s)
+        out_lines.append(s)
+    joined = "\n".join(out_lines)
+    joined = re.sub(r"[ \t]+\n", "\n", joined)
+    joined = re.sub(r"\n{3,}", "\n\n", joined)
+    return joined.strip()
+
 
 def parse_sections(raw: str) -> List[Dict[str, str]]:
     label_map = {l.lower(): l for l in SECTIONS}
@@ -32,7 +82,7 @@ def parse_sections(raw: str) -> List[Dict[str, str]]:
 
     def flush():
         if cur_label and "".join(cur_buf).strip():
-            sections.append({"label": cur_label, "text": "\n".join(cur_buf).strip()})
+            sections.append({"label": cur_label, "text": clean_plain_text("\n".join(cur_buf))})
 
     for ln in (raw or "").splitlines():
         m = re.match(r"^\s*#{1,6}\s*(.+?)\s*[:.]?\s*$", ln)
@@ -49,7 +99,7 @@ def parse_sections(raw: str) -> List[Dict[str, str]]:
             cur_buf.append(ln)
     flush()
     if not sections and (raw or "").strip():
-        sections = [{"label": "Yechim", "text": raw.strip()}]
+        sections = [{"label": "Yechim", "text": clean_plain_text(raw)}]
     return sections
 
 
@@ -159,6 +209,16 @@ def build_general_prompt(question: str) -> str:
     )
 
 
+def detect_subject(question: str, parsed: ParsedQuery) -> str:
+    """Savoldan/matndan fan nomini aniqlaydi (smart subject detection)."""
+    if parsed.subject_name:
+        return parsed.subject_name
+    sid = db.match_subject_id(question)
+    if sid:
+        return db.subject_name(sid)
+    return ""
+
+
 def _solve_general(question: str) -> Dict[str, Any]:
     if llm.provider() == "none":
         return {"status": "no_llm", "message": NO_LLM_HINT, "plan": "general"}
@@ -175,7 +235,8 @@ def _solve_general(question: str) -> Dict[str, Any]:
     except Exception as e:
         return {"status": "error", "message": f"AI chaqiruvida muammo: {e}", "plan": "general"}
     return {"status": "ok", "message": "Javob tayyor",
-            "sections": parse_sections(raw), "raw": raw, "plan": "general"}
+            "sections": parse_sections(raw), "raw": clean_plain_text(raw),
+            "plan": "general", "subject": detect_subject(question, retriever.parse_question(question))}
 
 
 def solve(question: str) -> Dict[str, Any]:
@@ -220,10 +281,16 @@ def solve(question: str) -> Dict[str, Any]:
                     "suggestions": retriever.ask_probe()}
         top = results[0]
         book = db.get_book(top["book_id"])
+        # Bir sahifa yetarli bo'lmasa — eng mos 3 sahifa matnini birlashtiramiz
+        extra = [r for r in results[1:3] if r.get("text")]
+        page_text = top["text"]
+        if extra:
+            page_text = page_text + "\n\n---\n\n" + "\n\n---\n\n".join(r["text"] for r in extra)
+        page_text = page_text[: config.MAX_PAGE_TEXT_FOR_LLM * 2]
         ctx = {
             "type": "semantic", "book_id": top["book_id"], "subject_name": top["subject_name"],
             "title": top["title"], "page_printed": top["printed_page"], "page_pdf": top["page_no"],
-            "page_text": top["text"],
+            "page_text": page_text,
             "headings": retriever.chapter_heading(book["id"], top["page_no"]) if book else [],
             "edition": book["edition"] if book else "", "year": book["year"] if book else "",
             "author": book["author"] if book else "", "publisher": book["publisher"] if book else "",
@@ -249,4 +316,123 @@ def solve(question: str) -> Dict[str, Any]:
                 "manba": _manba(ctx)}
 
     return {"status": "ok", "message": "Yechim tayyor (kitob matnidan olingan)" if plan == "exact_exercise" else "Yechim tayyor",
-            "sections": parse_sections(raw), "raw": raw, "manba": _manba(ctx), "plan": plan}
+            "sections": parse_sections(raw), "raw": clean_plain_text(raw), "manba": _manba(ctx),
+            "plan": plan, "subject": detect_subject(q, parsed)}
+
+
+# ---------------------------------------------------------------------------
+# Rasm / yozma (handwriting) uy vazifasi
+# ---------------------------------------------------------------------------
+def recognize_image_text(image_bytes: bytes) -> str:
+    """OCR va (mumkin bo'lsa) vision model yordamida rasm matnini taniydi."""
+    from . import pdfingest
+
+    ocr = pdfingest.ocr_image_bytes(image_bytes)
+    if llm.provider() == "none":
+        return ocr
+
+    import base64
+    try:
+        from PIL import Image
+        import io as _io
+        img = Image.open(_io.BytesIO(image_bytes))
+        mime, fmt = "image/png", "PNG"
+        if img.format == "JPEG":
+            mime, fmt = "image/jpeg", "JPEG"
+        img = img.convert("RGB")
+        buf = _io.BytesIO()
+        max_side = 1600
+        img.thumbnail((max_side, max_side))
+        img.save(buf, format=fmt)
+        b64 = base64.b64encode(buf.getvalue()).decode("ascii")
+    except Exception:
+        return ocr
+    try:
+        vision_raw = llm.chat_vision([
+            {"role": "system", "content": (
+                "Siz uy vazifasi suratlarini taniydigan OCR-assistantsiz. "
+                "Rasmdagi barcha matn, masala va topshiriqlarni aniq ko'chiring. "
+                "Formulalarni matn ko'rinishida yozing (x^2, sqrt(x), 5/2)."
+            )},
+            {"role": "user", "content": "Rasmdagi matnni to'liq ko'chirib bering."},
+        ], b64, mime, temperature=0.1)
+    except Exception:
+        return ocr
+    vision = " ".join(vision_raw.split())
+    if len(vision) > len(ocr):
+        return vision
+    return ocr
+
+
+def solve_image(
+    image_bytes: bytes,
+    mode: str = "homework",
+    question: str = "",
+) -> Dict[str, Any]:
+    """Rasmdan (surat yoki qo'l yozuvidan) uy vazifasini taniydi va yechadi.
+
+    mode: 'homework'  — darslik surati, topshiriqni tani va yech
+          'handwriting' — qo'l yozuvi, xatolarni tuzatib variantini tayyorla
+    """
+    combined = recognize_image_text(image_bytes)
+    combined = " ".join(combined.split())
+    if not combined:
+        return {"status": "clarify",
+                "message": "Rasmdan matn topilmadi. Yorug'likka va ravshanlikka e'tibor berib qayta suratga oling.",
+                "plan": "image"}
+
+    prompt_q = question.strip()
+    subject = detect_subject(prompt_q or combined, retriever.parse_question(prompt_q or combined))
+    if llm.provider() == "none":
+        return {"status": "no_llm", "message": NO_LLM_HINT,
+                "sections": [{"label": "Rasmdagi matn", "text": combined}],
+                "image_text": combined, "subject": subject, "plan": "image"}
+
+    if mode == "handwriting":
+        task = (
+            "Bu qo'l yozilgan daftar sahifasi. Rasmdagi yozmani taniy oling, "
+            "imlo/hisob xatolarini tuzating va to'g'rilangan, daftarga ko'chirishga "
+            "tayyor ko'rinishini tayyorlab bering. Xatolar ro'yxatini ham qo'shing."
+        )
+    else:
+        task = (
+            "Bu uy vazifasi surati. Har bir topshiriqni alohida belgilab, fanini aniqlab, "
+            "to'liq yechimini bering. Javobni o'qituvchiga topshirishga mos formatda yozing."
+        )
+
+    user_prompt = (
+        f"RASMDAGI MATN:\n{combined}\n\n"
+        f"{task}\n"
+    )
+    if prompt_q:
+        user_prompt = (
+            f"O'QUVCHI SAVOLI: «{prompt_q}»\n\n"
+            f"RASMDAGI MATN:\n{combined}\n\n"
+            f"{task}\n"
+        )
+
+    messages = [
+        {"role": "system", "content": (
+            "Siz 8-sinf o'quvchilariga barcha fanlardan uy vazifasini bajarishda "
+            "yordam beruvchi o'qituvchi-assistantsiz. Qisqa, aniq va o'quvchiga "
+            "tushunarli javob berasiz."
+        )},
+        {"role": "user", "content": user_prompt},
+    ]
+    try:
+        raw = llm.chat(messages, temperature=0.3)
+    except Exception as e:
+        return {"status": "error", "message": f"AI chaqiruvida muammo: {e}",
+                "sections": [{"label": "Rasmdagi matn", "text": combined}],
+                "image_text": combined, "subject": subject, "plan": "image"}
+    sections = parse_sections(raw)
+    sections.insert(0, {"label": "Topshiriq (rasmdan taniqandi)", "text": combined})
+    return {
+        "status": "ok",
+        "message": "Yechim tayyor (rasmdan)",
+        "sections": sections,
+        "raw": clean_plain_text(raw),
+        "image_text": combined,
+        "subject": subject,
+        "plan": "image",
+    }

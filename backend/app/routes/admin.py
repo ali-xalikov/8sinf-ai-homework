@@ -22,7 +22,7 @@ def stats(req: Request):
     chunks = storage.exec_one("SELECT COUNT(*) n FROM chunks")["n"]
     indexed_books = storage.exec_one("SELECT COUNT(*) n FROM books WHERE indexed=1")["n"]
     chats = storage.exec_one("SELECT COUNT(*) n FROM chat_messages")["n"]
-    provider = llm.provider()
+    provider = config.provider_label()
     try:
         state = indexer.refresh_vector()
     except Exception:
@@ -107,7 +107,8 @@ def ai_settings(req: Request):
     auth.require_admin(req)
     return {
         "provider": config.LLM_PROVIDER,
-        "effective_provider": llm.provider(),
+        "effective_provider": config.provider_label(),
+        "api_keys_configured": len(config.OPENAI_API_KEYS),
         "openai_model": config.OPENAI_MODEL,
         "openai_base": config.OPENAI_BASE_URL,
         "ollama_url": config.OLLAMA_BASE_URL,

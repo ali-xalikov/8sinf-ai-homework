@@ -60,6 +60,21 @@ def tesseract_available() -> bool:
     return _get_tesseract()
 
 
+def ocr_image_bytes(image_bytes: bytes) -> str:
+    """Yuklangan rasm (surat)dan matn chiqaradi. OCR yo'q bo'lsa bo'sh qaytaradi."""
+    if not (config.OCR_ENABLED and _get_tesseract()):
+        return ""
+    try:
+        from PIL import Image, ImageOps
+        import io as _io
+        img = Image.open(_io.BytesIO(image_bytes))
+        img = ImageOps.exif_transpose(img).convert("RGB")
+        otext = _ocr.image_to_string(img, lang=ocr_langs(), config="--psm 3")
+        return " ".join(otext.split())
+    except Exception:
+        return ""
+
+
 def ocr_langs() -> str:
     """Avval o'zbekcha, bo'lmasa rus/inglizcha (oson o'rtashmasdan)."""
     if _get_tesseract():
@@ -76,7 +91,7 @@ def ocr_langs() -> str:
 
 
 def open_document(pdf_path: str) -> "fitz.Document":
-    return fitz.open(pdf_path)
+    return fitz.open(str(config.resolve_path(pdf_path)))
 
 
 def page_count(doc) -> int:

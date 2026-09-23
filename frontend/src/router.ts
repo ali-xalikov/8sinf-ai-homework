@@ -12,6 +12,8 @@ export function parseHash(hash: string): Route {
   const params: Record<string, string> = {};
   if (name === "book" && parts.length >= 2) params.id = parts[1];
   if (name === "share" && parts.length >= 2) params.token = parts[1];
+  if (name === "chat" && parts.length >= 2) params.id = parts[1];
+  if (name === "history" && parts.length >= 2) params.id = parts[1];
   if (parts.includes("page")) {
     const i = parts.indexOf("page");
     if (parts[i + 1]) params.page = parts[i + 1];

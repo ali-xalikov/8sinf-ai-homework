@@ -5,7 +5,7 @@ import json
 import secrets
 from typing import Dict, List
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File, Form
 from pydantic import BaseModel
 
 from .. import auth, config, db, llm, ratelimit, solver, storage
@@ -73,6 +73,84 @@ async def solve(req: SolveRequest, req_: Request):
         id=secrets.token_hex(12), uid=user["id"], q=q[:500], c=db.utcnow(),
     )
     return {"result": result, "message_id": msg_id, "remaining": remaining}
+
+
+@router.post("/solve-image")
+async def solve_image(
+    req_: Request,
+    file: UploadFile = File(...),
+    question: str = Form(""),
+    mode: str = Form("homework"),
+):
+    """Rasm (yoki qo'l yozuvi)dan uy vazifasini taniydi va yechadi."""
+    user = auth.current_user(req_)
+
+    if req_.client and req_.client.host:
+        ip = req_.client.host
+    else:
+        ip = "?"
+    limit = 0 if user["role"] == "admin" else config.MAX_AI_REQUESTS_PER_MINUTE
+    ok, remaining = ratelimit.check(f"ai:{user['id']}", limit)
+    if not ok:
+        raise HTTPException(429, BUSY_MSG)
+
+    raw = await file.read()
+    if not raw:
+        raise HTTPException(400, "Rasm fayli bo'sh")
+    if mode not in ("homework", "handwriting"):
+        mode = "homework"
+
+    sem = _queue_ready()
+    try:
+        await asyncio.wait_for(sem.acquire(), timeout=_QUEUE_WAIT_S)
+    except asyncio.TimeoutError:
+        raise HTTPException(429, BUSY_MSG)
+    try:
+        result = await asyncio.to_thread(solver.solve_image, raw, mode, question.strip())
+    finally:
+        sem.release()
+
+    q = question.strip() or result.get("image_text") or "Rasm orqali so'ralgan uy vazifasi"
+    msg_id = secrets.token_hex(12)
+    storage.exec_write(
+        """INSERT INTO chat_messages(id, user_id, question, answer, source, created_at)
+           VALUES(:id,:uid,:q,:a,:s,:c)""",
+        id=msg_id, uid=user["id"], q=q[:500],
+        a=json.dumps(result, ensure_ascii=False),
+        s=json.dumps({}, ensure_ascii=False),
+        c=db.utcnow(),
+    )
+    return {"result": result, "message_id": msg_id, "remaining": remaining, "recognized": result.get("image_text", "")}
+
+
+@router.get("/dashboard")
+def dashboard(req_: Request):
+    """Dashboard uchun statistika: jami, saqlanganlar va fanlar bo'yicha taqsimot."""
+    user = auth.current_user(req_)
+    rows = storage.exec_all(
+        """SELECT id, question, answer, created_at FROM chat_messages
+           WHERE user_id=:u ORDER BY created_at DESC LIMIT 500""", u=user["id"],
+    )
+    saved_rows = storage.exec_all(
+        "SELECT COUNT(*) AS n FROM saved_solutions WHERE user_id=:u", u=user["id"],
+    )
+    total = len(rows)
+    by_subject: Dict[str, int] = {}
+    for r in rows:
+        try:
+            answer = json.loads(r["answer"] or "{}")
+            subj = answer.get("subject") or ""
+        except Exception:
+            subj = ""
+        if subj:
+            by_subject[subj] = by_subject.get(subj, 0) + 1
+    recent = [{"id": r["id"], "question": r["question"], "created_at": r["created_at"]} for r in rows[:8]]
+    return {
+        "total": total,
+        "saved": saved_rows[0]["n"] if saved_rows else 0,
+        "by_subject": [{"subject": k, "count": v} for k, v in sorted(by_subject.items(), key=lambda kv: -kv[1])],
+        "recent": recent,
+    }
 
 
 @router.get("/status")

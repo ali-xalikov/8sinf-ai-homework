@@ -6,6 +6,11 @@ import type {
   Answer,
   AnswerPayload,
   Book,
+  ChatConv,
+  ChatDetail,
+  ChatMsg,
+  ChatSendResponse,
+  DashboardStats,
   HealthAiResponse,
   HealthDbResponse,
   HealthResponse,
@@ -18,6 +23,7 @@ import type {
   SavedDetail,
   SavedRow,
   SearchHit,
+  SolveImageResponse,
   SolveResponse,
   Subject,
   User,
@@ -208,6 +214,10 @@ class ApiClient {
     return this.get<SearchHit[]>(`/api/books/${bid}/search?q=${encodeURIComponent(q)}&limit=${limit}`);
   }
 
+  bookFileUrl(bid: string) {
+    return `${API_BASE}/api/books/${encodeURIComponent(bid)}/file`;
+  }
+
   resolvePrinted(bid: string, printed: number) {
     return this.get<{ page_pdf: number; printed: number; offset: number }>(
       `/api/books/${bid}/print/${printed}`,
@@ -256,8 +266,41 @@ class ApiClient {
     return this.post<SolveResponse>("/api/ai/solve", { question });
   }
 
+  solveImage(file: File, question: string, mode: string) {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("question", question);
+    form.append("mode", mode);
+    return this.upload<SolveImageResponse>("/api/ai/solve-image", form);
+  }
+
   aiStatus() {
     return this.get<AiStatus>("/api/ai/status");
+  }
+
+  dashboard() {
+    return this.get<DashboardStats>("/api/ai/dashboard");
+  }
+
+  // ---------------- Chat ----------------
+  chatList() {
+    return this.get<ChatConv[]>("/api/chat");
+  }
+
+  chatCreate(message: string) {
+    return this.post<ChatDetail>(`/api/chat`, { message });
+  }
+
+  chatGet(id: string) {
+    return this.get<ChatDetail>(`/api/chat/${id}`);
+  }
+
+  chatSend(id: string, message: string) {
+    return this.post<ChatSendResponse>(`/api/chat/${id}/send`, { message });
+  }
+
+  chatDelete(id: string) {
+    return this.delete<{ ok: boolean }>(`/api/chat/${id}`);
   }
 
   history(limit = 100) {

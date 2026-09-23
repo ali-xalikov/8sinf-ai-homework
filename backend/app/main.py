@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import auth, config, db, errors, indexer, llm, storage
-from .routes import admin, ai, answers, auth_routes, books, pages, share, system
+from .routes import admin, ai, answers, auth_routes, books, chat, pages, share, system
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("app")
@@ -38,7 +38,7 @@ async def lifespan(app: FastAPI):
         log.warning("Iltimos, parolni o'zgartiring yoki .env da ADMIN_PASSWORD bilan belgilang.")
     else:
         log.info("Admin mavjud: %s", admin_result.get("username"))
-    log.info("AI provayder: %s", llm.provider())
+    log.info("AI provayder: %s (transport: %s)", config.provider_label(), llm.provider())
     log.info("Web root: %s", config.web_root())
     yield
 
@@ -69,6 +69,7 @@ app.include_router(auth_routes.router)
 app.include_router(books.router)
 app.include_router(pages.router)
 app.include_router(ai.router)
+app.include_router(chat.router)
 app.include_router(answers.router)
 app.include_router(admin.router)
 app.include_router(share.router)

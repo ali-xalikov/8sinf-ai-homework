@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { Icon } from "./Icons";
 
 export function Modal({
   open,
@@ -8,7 +9,7 @@ export function Modal({
 }: {
   open: boolean;
   onClose: () => void;
-  title: string;
+  title: ReactNode;
   children: ReactNode;
 }) {
   if (!open) return null;
@@ -18,7 +19,7 @@ export function Modal({
         <div className="modal-head">
           <h3>{title}</h3>
           <button className="icon-btn" onClick={onClose}>
-            ✖
+            <Icon.X />
           </button>
         </div>
         {children}

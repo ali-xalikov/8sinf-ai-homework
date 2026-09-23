@@ -196,6 +196,25 @@ CREATE TABLE IF NOT EXISTS shared_solutions(
 );
 CREATE INDEX IF NOT EXISTS idx_shared_message ON shared_solutions(message_id);
 
+CREATE TABLE IF NOT EXISTS conversations(
+  id         TEXT PRIMARY KEY,
+  user_id    TEXT NOT NULL,
+  title      TEXT NOT NULL DEFAULT '',
+  subject    TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_conv_user ON conversations(user_id, updated_at);
+
+CREATE TABLE IF NOT EXISTS conversation_messages(
+  id              TEXT PRIMARY KEY,
+  conversation_id TEXT NOT NULL,
+  role            TEXT NOT NULL,
+  content         TEXT NOT NULL,
+  created_at      TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_conv_messages ON conversation_messages(conversation_id, created_at);
+
 CREATE TABLE IF NOT EXISTS answers(
   id         TEXT PRIMARY KEY,
   subject_id TEXT NOT NULL DEFAULT '',

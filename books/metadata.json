@@ -26,6 +26,40 @@
           "pdf_path": "books/algebra/Algebra_8_sinf.pdf"
         }
       ]
+    },
+    {
+      "id": "kimyo",
+      "name": "Kimyo",
+      "class": 8,
+      "books": [
+        {
+          "id": "kimyo-kimyo-8-uzb",
+          "title": "Kimyo 8-sinf",
+          "author": "Vazirlik nashri",
+          "edition": "",
+          "publisher": "",
+          "year": "",
+          "language": "uz",
+          "pdf_path": "books/kimyo/kimyo_8_uzb.pdf"
+        }
+      ]
+    },
+    {
+      "id": "biologiya",
+      "name": "Biologiya",
+      "class": 8,
+      "books": [
+        {
+          "id": "biologiya-odam-va-uning-salomatligi-8-uzb",
+          "title": "Biologiya 8-sinf (Odam va uning salomatligi)",
+          "author": "Vazirlik nashri",
+          "edition": "",
+          "publisher": "",
+          "year": "",
+          "language": "uz",
+          "pdf_path": "books/biologiya/odam_va_uning_salomatligi_8_uzb.pdf"
+        }
+      ]
     }
   ]
 }

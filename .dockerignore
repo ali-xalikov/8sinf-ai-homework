@@ -10,7 +10,7 @@ backend/.venv313
 frontend/node_modules
 frontend/dist
 index
-books
+books/**/*.crdownload
 docker-compose.yml
 Dockerfile
 render.yaml

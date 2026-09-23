@@ -18,7 +18,9 @@ def health_ai():
     provider = llm.provider()
     return {
         "status": "ok" if provider in ("openai", "ollama") else "degraded",
-        "provider": provider or "none",
+        "provider": config.provider_label(),
+        "transport": provider,
+        "keys": len(config.OPENAI_API_KEYS),
         "model": config.OPENAI_MODEL if provider == "openai" else config.OLLAMA_MODEL,
         "ollama_online": checkers.ollama_ping() if provider == "ollama" else None,
     }

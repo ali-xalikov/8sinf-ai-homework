@@ -2,6 +2,7 @@ import { useState } from "react";
 import { api } from "../api";
 import { useToast } from "../components/Toast";
 import { useApp } from "../store";
+import { Icon } from "../components/Icons";
 
 export function Auth() {
   const [mode, setMode] = useState<"login" | "register">("login");
@@ -68,17 +69,17 @@ export function Auth() {
     <div className="auth-screen">
       <div className="auth-card">
         <div className="auth-brand">
-          <div className="logo">📚</div>
+          <div className="logo"><Icon.Library size={46} /></div>
           <h1>8-sinf AI Homework</h1>
           <p>O‘z darsliklaring asosida AI yordamchi</p>
         </div>
 
         <div className="auth-tabs">
           <button className={mode === "login" ? "active" : ""} onClick={() => setMode("login")}>
-            👤 Kirish
+            <Icon.User /> Kirish
           </button>
           <button className={mode === "register" ? "active" : ""} onClick={() => setMode("register")}>
-            📝 Ro‘yxatdan o‘tish
+            <Icon.SquarePen /> Ro‘yxatdan o‘tish
           </button>
         </div>
 

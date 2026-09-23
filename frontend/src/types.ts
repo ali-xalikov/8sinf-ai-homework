@@ -89,12 +89,21 @@ export interface SolveResult {
   plan?: string;
   raw?: string;
   suggestions?: string[];
+  subject?: string;
+  image_text?: string;
 }
 
 export interface SolveResponse {
   result: SolveResult;
   message_id: string;
   remaining: number;
+}
+
+export interface SolveImageResponse {
+  result: SolveResult;
+  message_id: string;
+  remaining: number;
+  recognized: string;
 }
 
 export interface HistoryRow {
@@ -133,6 +142,40 @@ export interface AiStatus {
   model: string;
   endpoint: string;
   note?: string;
+}
+
+export interface DashboardStats {
+  total: number;
+  saved: number;
+  by_subject: { subject: string; count: number }[];
+  recent: HistoryRow[];
+}
+
+export interface ChatConv {
+  id: string;
+  title: string;
+  subject: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ChatMsg {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  created_at: string;
+}
+
+export interface ChatDetail {
+  conversation: ChatConv;
+  messages: ChatMsg[];
+}
+
+export interface ChatSendResponse {
+  conversation: ChatConv;
+  messages: ChatMsg[];
+  reply: string;
+  remaining: number;
 }
 
 export interface PageInfo {

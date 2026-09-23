@@ -3,7 +3,9 @@ import { api } from "../api";
 import { useApp } from "../store";
 import { useToast } from "../components/Toast";
 import { Modal } from "../components/Modal";
+import { Icon } from "../components/Icons";
 import type { Answer, AnswerKind, AnswerPayload } from "../types";
+import type { ReactNode } from "react";
 
 const SUBJECTS: [string, string][] = [
   ["", "Barcha fanlar"],
@@ -24,11 +26,11 @@ const SUBJECTS: [string, string][] = [
   ["chizmachilik", "Chizmachilik"],
 ];
 
-const KINDS: { id: AnswerKind | ""; label: string; icon: string }[] = [
-  { id: "", label: "Hammasi", icon: "🗂" },
-  { id: "bsb", label: "BSB", icon: "📘" },
-  { id: "chsb", label: "ChSB", icon: "📗" },
-  { id: "other", label: "Boshqa", icon: "📄" },
+const KINDS: { id: AnswerKind | ""; label: string; icon: ReactNode }[] = [
+  { id: "", label: "Hammasi", icon: <Icon.FolderOpen /> },
+  { id: "bsb", label: "BSB", icon: <Icon.Book /> },
+  { id: "chsb", label: "ChSB", icon: <Icon.BookMarked /> },
+  { id: "other", label: "Boshqa", icon: <Icon.FileText /> },
 ];
 
 const KIND_LABEL: Record<string, string> = { bsb: "BSB", chsb: "ChSB", other: "Boshqa" };
@@ -112,12 +114,12 @@ export function Answers() {
     <div>
       <div className="answers-head">
         <div>
-          <h2 className="section-title">📋 BSB / ChSB javoblar</h2>
+          <h2 className="section-title"><Icon.ClipboardList /> BSB / ChSB javoblar</h2>
           <p className="section-sub">Nazorat va chorak ishlari uchun tayyor javoblar</p>
         </div>
         {isAdmin && (
           <button className="btn primary" onClick={openNew}>
-            ➕ Javob qo‘shish
+            <Icon.Plus /> Javob qo‘shish
           </button>
         )}
       </div>
@@ -149,11 +151,11 @@ export function Answers() {
         </div>
       ) : answers.length === 0 ? (
         <div className="empty">
-          📭 Hozircha javob qo‘shilmagan.
+          <Icon.Inbox /> Hozircha javob qo‘shilmagan.
           {isAdmin && (
             <div style={{ marginTop: 10 }}>
               <button className="btn small primary" onClick={openNew}>
-                ➕ Javob qo‘shish
+                <Icon.Plus /> Javob qo‘shish
               </button>
             </div>
           )}
@@ -175,10 +177,10 @@ export function Answers() {
                 {isAdmin && (
                   <div className="answer-item-actions" onClick={e => e.stopPropagation()}>
                     <button className="btn tiny ghost" onClick={() => openEdit(a)}>
-                      ✏️
+                      <Icon.Pencil />
                     </button>
                     <button className="btn tiny ghost" onClick={() => remove(a)}>
-                      🗑
+                      <Icon.Trash2 />
                     </button>
                   </div>
                 )}
@@ -199,10 +201,10 @@ export function Answers() {
             {isAdmin && (
               <div className="row" style={{ marginTop: 16 }}>
                 <button className="btn primary" onClick={() => { const a = viewing; setViewing(null); openEdit(a); }}>
-                  ✏️ Tahrirlash
+                  <Icon.Pencil /> Tahrirlash
                 </button>
                 <button className="btn ghost" onClick={() => remove(viewing)}>
-                  🗑 O‘chirish
+                  <Icon.Trash2 /> O‘chirish
                 </button>
               </div>
             )}
@@ -213,7 +215,7 @@ export function Answers() {
       <Modal
         open={editing !== null}
         onClose={() => setEditing(null)}
-        title={editing === "new" ? "➕ Javob qo‘shish" : "✏️ Javobni tahrirlash"}
+        title={editing === "new" ? <><Icon.Plus /> Javob qo‘shish</> : <><Icon.Pencil /> Javobni tahrirlash</>}
       >
         <div className="grid-2">
           <div className="field">

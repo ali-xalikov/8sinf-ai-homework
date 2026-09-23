@@ -12,6 +12,7 @@ import { History } from "./views/History";
 import { Profile } from "./views/Profile";
 import { Admin } from "./views/Admin";
 import { Share } from "./views/Share";
+import { Chat } from "./views/Chat";
 
 function Loading() {
   return (
@@ -55,6 +56,7 @@ export default function App() {
   else if (page === "book" && route.params.id)
     view = <PdfViewer key={route.params.id} bid={route.params.id} pageParam={route.params.page} />;
   else if (page === "ai") view = <Ai key="ai" />;
+  else if (page === "chat") view = <Chat key={"chat-" + (route.params.id || "")} initialId={route.params.id || ""} />;
   else if (page === "answers") view = <Answers key="answers" />;
   else if (page === "history") view = <History key="history" initialId={route.params.id || ""} />;
   else if (page === "saved") view = <History key="saved" savedOnly />;

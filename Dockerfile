@@ -19,6 +19,7 @@ COPY backend/requirements.txt backend/requirements-postgres.txt ./
 RUN pip install -r requirements.txt -r requirements-postgres.txt
 
 COPY backend/ backend/
+COPY books/ books/
 RUN mkdir -p /app/books /app/index
 
 EXPOSE 8000
